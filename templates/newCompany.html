@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    New Company
+{% endblock %}
+
+{% block main %}
+    <div>     
+        <form action="/createCompany" method="post">
+            <h1>Create Account</h1>
+            <hr>
+            
+            {% if error %}
+                <p id="error"><strong>{{ error }}</strong></p>
+            {% endif %}
+
+            <input type="text" placeholder="Company name" name="companyName" id="companyName" required autocomplete="off">
+            <button type="submit" id="register_button">Create a new Company</button>
+        </form>
+    </div>
+
+    <div>
+        <p><a href="/">Wait instead</a></p>
+    </div>
+{% endblock %}

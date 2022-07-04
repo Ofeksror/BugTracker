@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    New Project
+{% endblock %}
+
+{% block main %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <h2>New Project</h2>
+
+    <div>
+        <form action="/test/newProject" method="post">
+            <input required autocomplete="off" id="title" name="title" placeholder="Project title" type="text">
+            
+            <label for="status">Status:</label>
+            <select name="status">
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+            </select>
+
+            <button type="submit">New project</button>
+        </form>            
+    </div>
+
+{% endblock %}

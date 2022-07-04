@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block main %}
+    <div>
+        <form action="/login" method="post">
+            <h1>Log in</h1>
+            <hr>
+
+            {% if error %}
+                <p id="error"><strong>{{ error }}</strong></p>
+            {% endif %}
+
+            <input required autocomplete="off" id="email" name="email" placeholder="Email" type="email">
+            <input required autocomplete="off" id="password" name="password" placeholder="Password" type="password">
+            <button type="submit">Log In</button>
+        </form>            
+    </div>
+
+    <div>
+        <a href="/forgot">Forgot password?</a>
+        <a href="/register">Create an account</a>
+    </div>
+{% endblock %}
