@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block main %}
+    <script>
+        let navbar = document.getElementById('navbar');
+        elements = document.getElementById('navbarSupportedContent');
+        elements.remove();
+    </script>
+
+    <div class="container-sm" style="margin: auto; padding: 30px; max-width: 800px;">
+        <form action="/account/login" method="post">
+            <h1 class="text-center display-5">Log in</h1>
+            <hr class="border-primary border-3 opacity-75">
+
+            {% if error %}
+                <div class="text-center alert alert-danger" role="alert">
+                    <strong>{{ error }}</strong>
+                </div>
+            {% endif %}
+
+            <div class="form-floating mb-3">
+                <input required type="email" class="form-control" autocomplete="off" id="email" name="email" placeholder="name@example.com">
+                <label for="email">Email address</label>
+            </div>
+
+            <div class="form-floating">
+                <input required id="password" name="password" type="password" class="form-control" placeholder="Password">
+                <label for="password">Password</label>
+            </div>
+
+            <div class="d-grid gap-2" style="margin-top: 20px; margin-bottom: 30px;">
+                <button type="submit" class="btn btn-outline-primary">Log In</button>
+            </div>
+        </form>            
+        <div class="row justify-content-center">
+            <!-- <a class="text-center col-6 col-sm-4 link-primary" href="/account/reset" style="text-decoration: none;">Forgot password?</a> -->
+            <a class="text-center col-6 col-sm-4 link-primary" href="/account/demo" style="text-decoration: none;">Demo account</a>
+            <a class="text-center col-6 col-sm-4 link-primary" href="/account/register" style="text-decoration: none;">Create an account</a>
+        </div>
+    </div>
+
+{% endblock %}

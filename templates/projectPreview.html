@@ -1,0 +1,340 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ ProjectTitle }} | Project
+{% endblock %}
+
+
+{% block nav %}
+    {% if ControlAccess == 1 %}
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/control/tickets">Tickets</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/control/projects">Projects</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/control/team">Team</a>
+        </li>
+    {% endif %}
+{% endblock %}
+
+
+{% block main %}
+
+<div class="container-sm">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-primary" role="alert">{{ message }}</div>
+            {% endfor %}
+    {% endif %}
+    {% endwith %}
+</div>
+    
+<div class="container-fluid" style="max-width: 80%">
+    <div class="row justify-content-center g-4">
+        <div class="col-md-auto">
+            <h1>{{ ProjectTitle }}</h1>
+            <h4 style="margin-top: 15px;">Status: <span class="badge rounded-pill bg-primary">{{ ProjectStatus }}</span></h4>
+            
+            {% if ControlAccess == 1 %}
+            <button data-bs-toggle="modal" data-bs-target="#ProjectModal" class="btn btn-primary" style="margin-top: 15px;">Edit Project</button>
+            {% elif ControlAccess == 2 %}
+            <button data-bs-toggle="modal" data-bs-target="#ManagerProjectModal" class="btn btn-primary" style="margin-top: 15px;">Update Project</button>
+            {% endif %}
+            
+            <hr>
+
+            <div>
+                <h3>Project managers</h3>
+
+                <div class="list-group">
+                    {% for Manager in Managers %}
+                        <span id="user{{ Manager.id }}">
+                            <button type="button" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#userContactModal" data-bs-slack="@{{ Manager.slack }}" data-bs-email="{{ Manager.email }}" data-bs-id="{{ Manager.id }}" data-bs-name="{{ Manager.name }}">{{ Manager.name }}</button>
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-4 col-6">
+            <div class="col-md-12">
+                <h1 style="margin-left: 20px;">Tickets</h1>
+                <hr style="margin-bottom: 25px; border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));">
+                <div id="ticketsList">
+                    <div class="row g-4" style="margin-left:auto; margin-right:auto;">
+                        {% for Ticket in Tickets %}
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-4">
+                            <div class="card w-8" style="margin: 0 auto; float: none; cursor: pointer;" onclick="location.href='/tickets/?ticket={{ Ticket.ID }}';">
+                                <div class="card-body">
+                                    <h4 class="card-title">{{ Ticket.Title }}</h4>
+                                    <h6 class="card-subtitle mb-2 text-muted">Due {{ Ticket.Deadline }}</h6>
+                                    <span style="display: inline-block; font-size: 12px;" class="badge rounded-pill text-bg-primary">{{ Ticket.Status }}</span>
+                                    <span style="display: inline-block; font-size: 12px;" class="badge rounded-pill text-bg-secondary">{{ Ticket.Priority }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <style>
+                            .card {
+                                transition-duration: 0.3s;
+                            }
+                            .card:hover {
+                                transform:scale(1.05,1.05);
+                                margin: auto;
+                                // background-color: rgb(238, 238, 238);
+                                border-color: rgb(17, 174, 236);
+                                color: rgb(17, 174, 236);
+                                // box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.192);
+                            }
+                        </style>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+
+<div class="modal fade" id="userContactModal" tabindex="-1" aria-labelledby="userContactModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userContactModalTitle">Contact Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3" id="unchangeableUserDetails">
+                    <h3 id="user-Fullname"></h3>
+                    <p id="user-Role"></p>
+                    <span id="contactUser">                        
+                        <p id="user-Email"></p>
+                        <p id="user-Slack"></p>
+                    </span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    let userModal = document.getElementById('userContactModal')
+    userModal.addEventListener('show.bs.modal', event => {
+        // Button that triggered the modal
+        let button = event.relatedTarget
+        // Extract info from data-bs-* attributes
+        let name = button.getAttribute('data-bs-name')
+        let email = button.getAttribute('data-bs-email')
+        let slack = button.getAttribute('data-bs-slack')
+        let role = button.getAttribute('data-bs-role')
+        // If necessary, you could initiate an AJAX request here
+        // and then do the updating in a callback.
+        //
+        // Update the modal's content.
+        let modalUserName = userModal.querySelector('#user-Fullname')
+        let modalUserEmail = userModal.querySelector('#user-Email')
+        let modalUserSlack = userModal.querySelector('#user-Slack')
+        let modalUserRole = userModal.querySelector('#user-Role')
+
+        modalUserName.textContent = name
+        modalUserEmail.textContent = email
+        modalUserRole.textContent = role
+
+        if (slack == "None") {
+            modalUserSlack.remove()
+        }
+
+        modalUserSlack.textContent = slack
+    })
+</script>
+
+
+    {% if ControlAccess == 1 %}
+        <div class="modal fade" id="ProjectModal" tabindex="-1" aria-labelledby="ProjectModal" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ModalTitle">Edit Project</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3" id="changeableTicketDetails">
+                            <form action="/projects" method="post" id="EditProject" name="EditProject">
+                                <input name="projectID" id="projectID" type="hidden" readonly value="{{ ProjectID }}">
+                                
+                                <label for="projectTitle" class="form-label">Title</label>
+                                <input class="form-control" required type="text" name="projectTitle" id="projectTitle" value="{{ ProjectTitle }}">
+                                
+                                <label for="projectStatus" class="form-label" style="margin-top: 15px">Status:</label>
+                                <select required id="projectStatus" name="projectStatus" class="form-select">
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Closed">Closed</option>
+                                </select>
+                                
+                                <label for="projectAssign" class="form-label" style="margin-top: 15px;">Assign team members:</label>
+                                <div class="help-tip">
+                                    <p><b>Ctrl + Click</b> on team members to assign or remove them from ticket</p>
+                                </div>
+                                <style>
+                                    .help-tip{
+                                        display: inline-block;
+                                        /*position: absolute;
+                                         top: 18px;
+                                        right: 18px; */
+                                        text-align: center;
+                                        width: 24px;
+                                        height: 24px;
+                                        font-size: 14px;
+                                        line-height: 26px;
+                                        cursor: default;
+                                    }
+
+                                    .help-tip:before{
+                                        content:'?';
+                                        font-weight: bold;
+                                        color:rgb(23, 138, 204);
+                                    }
+
+                                    .help-tip:hover p{
+                                        display:block;
+                                        transform-origin: 100% 0%;
+
+                                        -webkit-animation: fadeIn 0.3s ease-in-out;
+                                        animation: fadeIn 0.3s ease-in-out;
+
+                                    }
+
+                                    .help-tip p{    /* The tooltip */
+                                        display: none;
+                                        text-align: left;
+                                        background-color: #1E2021;
+                                        padding: 20px;
+                                        width: 300px;
+                                        position: absolute;
+                                        border-radius: 3px;
+                                        box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+                                        right: -4px;
+                                        color: #FFF;
+                                        font-size: 13px;
+                                        line-height: 1.4;
+                                    }
+
+                                    .help-tip p:before{ /* The pointer of the tooltip */
+                                        position: absolute;
+                                        content: '';
+                                        width:0;
+                                        height: 0;
+                                        border:6px solid transparent;
+                                        border-bottom-color:#1E2021;
+                                        right:10px;
+                                        top:-12px;
+                                    }
+
+                                    .help-tip p:after{ /* Prevents the tooltip from being hidden */
+                                        width:100%;
+                                        height:40px;
+                                        content:'';
+                                        position: absolute;
+                                        top:-40px;
+                                        left:0;
+                                    }
+
+                                    /* CSS animation */
+
+                                    @-webkit-keyframes fadeIn {
+                                        0% { 
+                                            opacity:0; 
+                                            transform: scale(0.6);
+                                        }
+
+                                        100% {
+                                            opacity:100%;
+                                            transform: scale(1);
+                                        }
+                                    }
+
+                                    @keyframes fadeIn {
+                                        0% { opacity:0; }
+                                        100% { opacity:100%; }
+                                    }
+                                </style>
+                                <select id="projectAssign" name="projectAssign" class="form-select" multiple size="4" aria-label="multiple size 4 select example">
+                                    {% for Member in Members %}
+                                        <option value="{{ Member.id }}">{{ Member.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <input value="Update" id="submitButtonText" type="submit" class="btn btn-primary" value="Update" form="EditProject">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            let Modal = document.getElementById('ProjectModal')
+            Modal.addEventListener('show.bs.modal', event => {
+                let ModalStatus = Modal.querySelector("#projectStatus")
+                ModalStatus.value = '{{ ProjectStatus }}'
+                
+                ManagersSelected = Modal.querySelector("#projectAssign")
+                let assigned = {{ Managers|tojson }}
+                for (let member = 0; member < assigned.length; member++ ) {
+                    for (let i = 0; i < ManagersSelected.options.length; i++) {
+                        if (assigned[member]['id'] == ManagersSelected[i].value) {
+                            ManagersSelected.options[i].selected = true
+                        }
+                    }
+                }
+            })
+        </script>
+    {% elif ControlAccess == 2 %}
+        <div class="modal fade" id="ManagerProjectModal" tabindex="-1" aria-labelledby="ManagerProjectModal" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ManagerProjectModalTitle">Update Project</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3" id="changeableTicketDetails">
+                            <form action="/projects/" method="post" id="EditProject" name="EditProject">
+                                <input name="UserRole" id="UserRole" type="hidden" readonly value="2">
+                                <input name="projectID" id="projectID" type="hidden" readonly value="{{ ProjectID }}">
+                                
+                                <label for="projectTitle" class="form-label">Title</label>
+                                <input class="form-control" required type="text" name="projectTitle" id="projectTitle" value="{{ ProjectTitle }}">
+                                
+                                <label for="projectStatus" class="form-label" style="margin-top: 15px">Status:</label>
+                                <select required id="projectStatus" name="projectStatus" class="form-select">
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Closed">Closed</option>
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <input value="Update" id="submitButtonText" type="submit" class="btn btn-primary" value="Update" form="EditProject">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            let ModalM = document.getElementById('ManagerProjectModal')
+            ModalM.addEventListener('show.bs.modal', event => {
+                let ModalStatus = document.getElementById("projectStatus")
+                ModalStatus.value = '{{ ProjectStatus }}'
+            })
+        </script>
+    {% endif %}
+
+
+{% endblock %}

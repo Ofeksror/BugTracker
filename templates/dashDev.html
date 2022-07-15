@@ -1,0 +1,321 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block head %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {'packages':['gantt']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function toMilliseconds(minutes) {
+            return minutes * 60 * 1000;
+        }
+
+    function toDate(sdate) {
+        let dateArr = sdate.split("-");
+        let year = dateArr[0]
+        let month = dateArr[1] - 1
+        let day = dateArr[2]
+        date = new Date(year, month, day)
+        return date
+    }
+
+    function drawChart() {
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Task ID');
+        data.addColumn('string', 'Task Name');
+        data.addColumn('string', 'Priority');
+        data.addColumn('date', 'Start Date');
+        data.addColumn('date', 'End Date');
+        data.addColumn('number', 'Duration');
+        data.addColumn('number', 'Percent Complete');
+        data.addColumn('string', 'Dependencies');
+
+        data.addRows([
+            {% for Ticket in Tickets %}
+                {% if Ticket.deadline %}
+                    ['{{ Ticket.id }}', '{{ Ticket.title }}', '{{ Ticket.title }}', toDate("{{ Ticket.date_added }}"), toDate("{{ Ticket.deadline }}"), null, {{ Ticket.percentage }}, null],
+                {% else %}
+                    ['{{ Ticket.id }}', '{{ Ticket.title }}', '{{ Ticket.title }}', toDate("{{ Ticket.date_added }}"), new Date(), null, {{ Ticket.percentage }}, null],
+                {% endif %}
+            {% endfor %}
+        ])
+
+        var options = {
+            height: {{ GanttHeight }},
+            gantt: {
+                trackHeight: 30,
+                barCornerRadius: 10,
+                innerGridTrack: {fill: '#ffffff'},
+                innerGridDarkTrack: {fill: '#fafafa'},
+                // pallete https://stackoverflow.com/questions/35165271/customize-the-bar-colors-in-google-gantt-charts
+                palette: [
+                    { // RED (Urgent)
+                        "color": "#e0223c", // "#e80c30",
+                        "dark": "#ad1127", //"#850b1f",
+                        "light": "#f2465d" //"#f04f6a"
+                    },
+                    { // GREEN (Low)
+                        "color": "#1ad636",
+                        "dark": "#0e9622",
+                        "light": "#87ed96"
+                    },
+                    { // Blue (Medium)
+                        "color": "#1ca8d4",
+                        "dark": "#1389ad",
+                        "light": "#5ec6e6"
+                    },
+                    { // Orange (High)
+                        "color": "#f5a214",
+                        "dark": "#96630b",
+                        "light": "#f09554"
+                    },
+                ],
+                labelStyle: {
+                    fontName: 'Lato',
+                    fontSize: 16
+                },
+            },
+        };  
+
+        var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
+
+        chart.draw(data, options);
+    }
+</script>
+{% endblock %}
+
+{% block main %}
+    <div class="container-sm">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- TICKETS - KANBAN BOARD -->
+            <!-- Tickets assigned to user (group by status) -->
+    <div id="kanbanTickets"  class="container">
+
+        <style>
+            .BugBadge {
+                background-color: #4fad18;
+                color: rgb(255, 255, 255);
+            }
+            .IssueBadge {
+                background-color: #FF595E;
+                color: rgb(255, 255, 255);
+            }
+            .requestBadge {
+                background-color: #1982C4;
+                color: rgb(255, 255, 255);
+            }
+            .EnhancementBadge {
+                background-color: #fccb47;
+                color: rgb(255, 255, 255);
+                text-shadow: 0px 0px 2px #00000069;
+            }
+
+            .LowBadge {
+                background-color: #17b2f0;
+                color: rgb(255, 255, 255);
+            }
+            .MediumBadge {
+                background-color: #1391bb;
+                color: rgb(255, 255, 255);
+            }
+            .HighBadge {
+                background-color: #0b3f69;
+                color: rgb(255, 255, 255);
+            }
+            .UrgentBadge {
+                background-color: #db3030;
+                color: rgb(255, 255, 255);
+            }
+        </style>
+
+        <div class="row">
+            <ol id="openTickets" class="col-md-4">
+                <h2 style="margin-bottom: 20px; text-align: center;"><span class="badge rounded-pill text-bg-primary">Open</span></h2>
+
+                <div id="properties">
+                    {% for ticket in OpenTickets %}
+                    <li style="list-style: none">
+                        <div class="card text-bg-light mb-3" style="max-width: 18rem; cursor: pointer; margin: 0 auto; float: none;" id={{ ticket.id }} onclick="location.href='/tickets/?ticket={{ ticket.id }}';">
+                            <div class="card-body">
+                                <h4 class="card-title">{{ ticket.title }}</h4>
+
+                                <h6>Project: <span class="badge bg-secondary" style="font-weight: 400;">{{ ticket.projectName }}</span></h6>
+
+                                {% if ticket.deadline %}
+                                <h6 class="card-text" style="margin-top: 12px; margin-bottom: 12px;">Deadline: <b>{{ ticket.deadline }}</b></h6>
+                                {% endif %}
+                                
+                                <h5 style="display: inline-block; margin-right: 3px;"><span class="badge {{ ticket.priority }}Badge">{{ ticket.priority }}</span></h5>
+                                <h5 style="display: inline-block;"><span class="badge {{ ticket.type }}Badge">{{ ticket.type }}</span></h5>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </div>
+            </ol>
+
+            <ol id="inProgressTickets" class="col-md-4">
+                <h2 style="margin-bottom: 20px; text-align: center;"><span class="badge rounded-pill text-bg-primary">In Progress</h2>
+                
+                <div id="properties">
+                    {% for ticket in InProgressTickets %}
+                    <li style="list-style: none">
+                        <div class="card text-bg-light mb-3" style="max-width: 18rem; cursor: pointer; margin: 0 auto; float: none;" id={{ ticket.id }} onclick="location.href='/tickets/?ticket={{ ticket.id }}';">
+                            <div class="card-body">
+                                <h4 class="card-title">{{ ticket.title }}</h4>
+
+                                <h6>Project: <span class="badge bg-secondary" style="font-weight: 400;">{{ ticket.projectName }}</span></h6>
+
+                                {% if ticket.deadline %}
+                                <h6 class="card-text" style="margin-top: 12px; margin-bottom: 12px;">Deadline: <b>{{ ticket.deadline }}</b></h6>
+                                {% endif %}
+                                <h5 style="display: inline-block; margin-right: 3px;"><span class="badge {{ ticket.priority }}Badge">{{ ticket.priority }}</span></h5>
+                                <h5 style="display: inline-block;"><span class="badge {{ ticket.type }}Badge">{{ ticket.type }}</span></h5>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </div>
+            </ol>
+
+            <ol id="resolvedTickets" class="col-md-4">
+                <h2 style="margin-bottom: 20px; text-align: center;"><span class="badge rounded-pill text-bg-primary">Resolved</h2>
+                
+                <div id="properties">
+                    {% for ticket in ResolvedTickets %}
+                    <li style="list-style: none">
+                        <div class="card text-bg-light mb-3" style="max-width: 18rem; cursor: pointer; margin: 0 auto; float: none;" id={{ ticket.id }} onclick="location.href='/tickets/?ticket={{ ticket.id }}';">
+                            <div class="card-body">
+                                <h4 class="card-title">{{ ticket.title }}</h4>
+
+                                <h6>Project: <span class="badge bg-secondary" style="font-weight: 400;">{{ ticket.projectName }}</span></h6>
+
+                                {% if ticket.deadline %}
+                                <h6 class="card-text" style="margin-top: 12px; margin-bottom: 12px;">Deadline: <b>{{ ticket.deadline }}</b></h6>
+                                {% endif %}
+                                <h5 style="display: inline-block; margin-right: 3px;"><span class="badge {{ ticket.priority }}Badge">{{ ticket.priority }}</span></h5>
+                                <h5 style="display: inline-block;"><span class="badge {{ ticket.type }}Badge">{{ ticket.type }}</span></h5>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </div>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Report a new ticket modal -->
+
+    <div class="text-center" style="margin-bottom: 60px;">
+        <button data-bs-toggle="modal" data-bs-target="#TicketsModal" class="btn btn-primary btn-lg">Report Ticket</button>
+    </div>
+
+
+    <div class="modal fade" id="TicketsModal" tabindex="-1" aria-labelledby="TicketsModal" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="TicketsModalTitle">Report new ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3" id="changeableTicketDetails">
+                        <form id="reportTicket" name="reportTicket" action="/new/ticket" method="post">
+                            <label for="title" class="form-label">Title</label>
+                            <input class="form-control" required autocomplete="off" id="title" name="title" placeholder="Title" type="text">
+
+                            <label for="description" class="form-label" style="margin-top: 15px">Description</label>
+                            <textarea id="description" name="description" placeholder="Description" type="text" class="form-control"></textarea>
+                            
+                            <div id="ticket-Labels" class="row g-3">
+                                <div class="col">
+                                    <label for="status" class="form-label" style="margin-top: 15px">Status:</label>
+                                    <select id="status" name="status" class="form-select">
+                                        <option selected value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Resolved">Resolved</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="priority" class="form-label" style="margin-top: 15px">Priority:</label>
+                                    <select id="priority" name="priority" class="form-select">
+                                        <option selected value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="type" class="form-label" style="margin-top: 15px">Type:</label>
+                                    <select id="type" name="type" class="form-select">
+                                        <option selected value="Bug">Bug</option>
+                                        <option value="Issue">Issue</option>
+                                        <option value="Feature request">Feature request</option>
+                                        <option value="Enhancement">Enhancement</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="ticket-Times" class="row g-3">
+                                <div class="col">
+                                    <label for="newDeadline" class="form-label" style="margin-top: 15px">Deadline:</label>
+                                    <input id="newDeadline" name="deadline" type="date" class="form-control">
+                                    <script>
+                                        let deadlineElement = document.getElementById('newDeadline')
+                                        deadlineElement.min = new Date().toISOString().split("T")[0];
+                                    </script>
+                                </div>
+                                <div class="col">
+                                    <label for="time_estimate" class="form-label" style="margin-top: 15px">Time Estimate (hours):</label>
+                                    <input id="time_estimate" name="time_estimate" placeholder="Time estimate" type="number" min="0" max="60" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <label for="projects" class="form-label" style="margin-top: 15px">Project:</label>
+                            <select required name="projects" id="projects" class="form-select">
+                                {% for project in Projects %}
+                                    <option value="{{ project.ID }}">{{ project.Title }}</option>
+                                {% endfor %}
+                            </select>             
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <input id="submitButton" type="submit" class="btn btn-primary" form="reportTicket" value="Report">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- - Gantt charts -->
+            <!-- Tickets by date started → deadline -->
+
+    {% if Tickets %}
+        <div class="container" style="margin-bottom: 130px;">
+            <div class="col align-self-center">
+                <div id="chart_div"></div>
+                <style>
+                    text {
+                        font-family: 'Lato', sans-serif !important;
+                    }
+                </style>
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}

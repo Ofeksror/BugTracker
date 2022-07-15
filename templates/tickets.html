@@ -1,0 +1,367 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    Ticket management
+{% endblock %}
+
+
+{% block nav %}
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/tickets">Tickets</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/projects">Projects</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/team">Team</a>
+    </li>
+{% endblock %}
+
+
+{% block main %}
+
+    <div class="container-sm">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-secondary" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    
+    <!-- Report a new ticket modal -->
+
+    <div class="modal fade" id="newTicketModal" tabindex="-1" aria-labelledby="newTicketModal" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newTicketModalTitle">Create new ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3" id="changeableTicketDetails">
+                        <form id="reportTicket" name="reportTicket" action="/new/ticket" method="post">
+                            <label for="title" class="form-label">Title</label>
+                            <input class="form-control" required autocomplete="off" id="title" name="title" placeholder="Title" type="text">
+
+                            <label for="description" class="form-label" style="margin-top: 15px">Description</label>
+                            <textarea id="description" name="description" placeholder="Description" type="text" class="form-control"></textarea>
+                            
+                            <div id="ticket-Labels" class="row g-3">
+                                <div class="col">
+                                    <label for="status" class="form-label" style="margin-top: 15px">Status:</label>
+                                    <select id="status" name="status" class="form-select">
+                                        <option selected value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Resolved">Resolved</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="priority" class="form-label" style="margin-top: 15px">Priority:</label>
+                                    <select id="priority" name="priority" class="form-select">
+                                        <option selected value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="type" class="form-label" style="margin-top: 15px">Type:</label>
+                                    <select id="type" name="type" class="form-select">
+                                        <option selected value="Bug">Bug</option>
+                                        <option value="Issue">Issue</option>
+                                        <option value="Feature request">Feature request</option>
+                                        <option value="Enhancement">Enhancement</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="ticket-Times" class="row g-3">
+                                <div class="col">
+                                    <label for="newDeadline" class="form-label" style="margin-top: 15px">Deadline:</label>
+                                    <input id="newDeadline" name="deadline" type="date" class="form-control">
+                                    <script>
+                                        let deadlineElement = document.getElementById('newDeadline')
+                                        deadlineElement.min = new Date().toISOString().split("T")[0];
+                                    </script>
+                                </div>
+                                <div class="col">
+                                    <label for="time_estimate" class="form-label" style="margin-top: 15px">Time Estimate (hours):</label>
+                                    <input id="time_estimate" name="time_estimate" placeholder="Time estimate" type="number" min="0" max="60" class="form-control">
+                                </div>
+                            </div>
+
+                            <label for="projects" class="form-label" style="margin-top: 15px">Project:</label>
+                            <select required name="projects" id="projects" class="form-select">
+                                {% for project in Projects %}
+                                    <option value="{{ project.id }}">{{ project.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <input id="submitButton" type="submit" class="btn btn-primary" form="reportTicket" value="Create">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="unacceptedTickets" class="container-fluid" style="max-width: 80%;">
+        <h1>Unaccepted tickets</h1>
+        <table class="table table-hover caption-top">
+            <caption>List of unaccepted tickets</caption>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Project</th>
+                    <th>Author</th>
+                    <th>Date added</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for ticket in UnacceptedTickets %}
+                    <tr data-bs-toggle="modal" data-bs-target="#TicketsModal"
+                    data-bs-type="{{ ticket.type }}" data-bs-status="{{ ticket.status }}" data-bs-title="{{ ticket.title }}"
+                    data-bs-description="{{ ticket.description }}" data-bs-id="{{ ticket.id }}" data-bs-priority="{{ ticket.priority }}"
+                    data-bs-deadline="{{ ticket.deadline }}" data-bs-timeestimate="{{ ticket.time_estimate }}" data-bs-author="{{ ticket.author }}"
+                    data-bs-dateadded="{{ ticket.date_added }}" data-bs-project="{{ ticket.project }}" data-bs-projectid="{{ ticket.project_id }}"
+                    data-bs-button="Accept Ticket" data-bs-accepted="0">
+                        <td>{{ ticket.title }}</td>
+                        <td>{{ ticket.type }}</td>
+                        <td>{{ ticket.status }}</td>
+                        <td>{{ ticket.priority }}</td>
+                        <td>{{ ticket.project }}</td>
+                        <td>{{ ticket.author }}</td>
+                        <td>{{ ticket.date_added }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="acceptedTickets" class="container-fluid" style="max-width: 80%; margin-top: 45px;">
+        <h1>Accepted tickets</h1>
+        <table class="table table-hover caption-top">
+            <caption>List of accepted tickets</caption>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Project</th>
+                    <th>Date added</th>
+                    <th>Deadline</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for ticket in AcceptedTickets %}
+                    <tr data-bs-toggle="modal" data-bs-target="#TicketsModal"
+                    data-bs-type="{{ ticket.type }}" data-bs-status="{{ ticket.status }}" data-bs-title="{{ ticket.title }}"
+                    data-bs-description="{{ ticket.description }}" data-bs-id="{{ ticket.id }}" data-bs-priority="{{ ticket.priority }}"
+                    data-bs-deadline="{{ ticket.deadline }}" data-bs-timeestimate="{{ ticket.time_estimate }}" data-bs-author="{{ ticket.author }}"
+                    data-bs-dateadded="{{ ticket.date_added }}" data-bs-project="{{ ticket.project }}" data-bs-projectid="{{ ticket.project_id }}"
+                    data-bs-button="Save Changes" data-bs-accepted="1">
+                        <td>{{ ticket.title }}</td>
+                        <td>{{ ticket.type }}</td>
+                        <td>{{ ticket.status }}</td>
+                        <td>{{ ticket.priority }}</td>
+                        <td>{{ ticket.project }}</td>
+                        <td>{{ ticket.date_added }}</td>
+                        <td>{{ ticket.deadline }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <!-- Tickets Modal -->
+    <div class="modal fade" id="TicketsModal" tabindex="-1" aria-labelledby="TicketsModal" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="TicketsModalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3" id="changeableTicketDetails">
+                        <form action="/control/tickets" method="post" id="EditTicket" name="EditTicket">
+                            <input name="ticket-ID" id="ticket-ID" type="hidden" readonly>
+
+                            <label for="ticket-Title" class="form-label">Title</label>
+                            <input class="form-control" required autocomplete="off" id="ticket-Title" name="ticket-Title" type="text" value="">
+
+                            <label for="ticket-Description" class="form-label" style="margin-top: 15px">Description</label>
+                            <textarea id="ticket-Description" name="ticket-Description" type="text" placeholder="Description" class="form-control"></textarea>
+                            
+                            <div id="ticket-Labels" class="row g-3">
+                                <div class="col">
+                                    <label for="ticket-Type" class="form-label" style="margin-top: 15px">Type:</label>
+                                    <select id="ticket-Type" name="ticket-Type" class="form-select">
+                                        <option value="Bug">Bug</option>
+                                        <option value="Issue">Issue</option>
+                                        <option value="Feature request">Feature request</option>
+                                        <option value="Enhancement">Enhancement</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col">
+                                    <label for="ticket-Status" class="form-label" style="margin-top: 15px">Status:</label>
+                                    <select id="ticket-Status" name="ticket-Status" class="form-select">
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Resolved">Resolved</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col">
+                                    <label for="ticket-Priority" class="form-label" style="margin-top: 15px">Priority:</label>
+                                    <select id="ticket-Priority" name="ticket-Priority" class="form-select">
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="ticket-Times" class="row g-3">
+                                <div class="col">
+                                    <label for="ticket-Deadline" class="form-label" style="margin-top: 15px">Deadline:</label>
+                                    <input class="form-control" type="date" id="ticket-Deadline" name="ticket-Deadline">
+                                    <script>
+                                        let deadlineElement = document.getElementById('ticket-Deadline')
+                                        deadlineElement.min = new Date().toISOString().split("T")[0];
+                                    </script>
+                                </div>
+                                <div class="col">
+                                    <label for="ticket-TimeEstimate" class="form-label" style="margin-top: 15px">Time Estimate (hours):</label>
+                                    <input name="ticket-TimeEstimate" id="ticket-TimeEstimate"  placeholder="Time estimate" type="number" min="0" max="60" class="form-control">
+                                </div>
+                            </div>
+
+                            <label for="ticket-Projects" class="form-label" style="margin-top: 15px">Project:</label>
+                            <select required id="ticket-Projects" name="ticket-Projects" class="form-select">
+                                {% for Project in Projects %}
+                                    <option value="{{ Project.id }}">{{ Project.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        <p id="footerText" style="margin-top: 25px; margin-bottom: 0px;"></p>
+                    </div>
+                </div>
+                <div id="hiddenForms" style="display: none;" class="hidden">
+                    <form id="DeleteTicket" action="/control/remove/ticket" method="post" name="DeleteTicket">
+                        <input id="deleteTicketID" name="deleteTicketID" type="hidden" readonly>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" class="btn btn-danger" form="DeleteTicket" value="Delete">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button id="RedirectAssignPeople" class="btn btn-primary">Manage Team</button>
+                    <input id="submitButtonText" type="submit" class="btn btn-primary" form="EditTicket">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let Modal = document.getElementById('TicketsModal')
+        Modal.addEventListener('show.bs.modal', event => {
+            // Button that triggered the modal
+            let tr = event.relatedTarget
+            // Extract info from data-bs-* attributes
+            let title = tr.getAttribute('data-bs-title')
+            let description = tr.getAttribute('data-bs-description')
+            let id = tr.getAttribute('data-bs-id')
+            let type = tr.getAttribute('data-bs-type')
+            let status = tr.getAttribute('data-bs-status')
+            let priority = tr.getAttribute('data-bs-priority')
+            let deadline = tr.getAttribute('data-bs-deadline')
+            let time_estimate = tr.getAttribute('data-bs-timeestimate')
+            let author = tr.getAttribute('data-bs-author')
+            console.log(author)
+            let date_added = tr.getAttribute('data-bs-dateadded')
+            console.log(date_added)
+            let project = tr.getAttribute('data-bs-project')
+            let project_id = tr.getAttribute('data-bs-projectid')
+            
+            // If necessary, you could initiate an AJAX request here
+            // and then do the updating in a callback.
+            //
+            // Update the modal's content.
+            
+            let ModalHeader = Modal.querySelector("#TicketsModalTitle")
+            ModalHeader.textContent = "Ticket #" + id
+            
+            let ModalID = Modal.querySelector("#ticket-ID")
+            ModalID.value = id
+            
+            let ModalTitle = Modal.querySelector("#ticket-Title")
+            ModalTitle.value = title
+            
+            let ModalDescription = Modal.querySelector("#ticket-Description")
+            ModalDescription.value = description
+            
+            let ModalType = Modal.querySelector("#ticket-Type")
+            ModalType.value = type
+            
+            let ModalStatus = Modal.querySelector("#ticket-Status")
+            ModalStatus.value = status
+            
+            let ModalPriority = Modal.querySelector("#ticket-Priority")
+            ModalPriority.value = priority
+            
+            let ModalDeadline = Modal.querySelector("#ticket-Deadline")
+            ModalDeadline.value = deadline
+            
+            let ModalTimeEstimate = Modal.querySelector("#ticket-TimeEstimate")
+            ModalTimeEstimate.value = time_estimate
+            
+            let ModalProjects = Modal.querySelector("#ticket-Projects")
+            ModalProjects.value = project_id
+            
+            let footerText = Modal.querySelector("#footerText")
+            footerText.innerHTML = `Submitted by ${author.bold()} on ${date_added.bold()}`
+            
+            let ModalDeleteTicket = Modal.querySelector("#deleteTicketID")
+            ModalDeleteTicket.value = id
+            
+            let buttonText = tr.getAttribute('data-bs-button')
+            let submitButton = Modal.querySelector("#submitButtonText")
+            submitButton.value = buttonText
+            
+            let accepted = tr.getAttribute('data-bs-accepted')
+            let redirectButton = Modal.querySelector("#RedirectAssignPeople")
+            
+            console.log(accepted)
+            
+            if (accepted == 0) {
+                redirectButton.style.display = 'none';
+            }
+            else {
+                redirectButton.style.display = 'block';
+                redirectButton.onclick = function () {
+                    location.href = "/tickets/?ticket=" + id
+                }
+            }
+        })
+    </script>
+
+    <div class="text-center d-grid gap-2 col-6 mx-auto" style="margin-top: 40px; max-width: 600px;">
+        <button data-bs-toggle="modal" data-bs-target="#newTicketModal" class="btn btn-primary">New Ticket</button>
+    </div>
+
+
+{% endblock %}

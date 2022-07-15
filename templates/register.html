@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Create Account
+{% endblock %}
+
+{% block main %}
+    <script>
+        let navbar = document.getElementById('navbar');
+        elements = document.getElementById('navbarSupportedContent');
+        elements.remove();
+    </script>
+
+    <div class="container-sm" style="margin: auto; padding: 30px; max-width: 800px;">     
+        <form action="/account/register" method="post">
+            <h1 class="text-center display-5">Create Account</h1>
+            <hr class="border-primary border-3 opacity-75">
+            
+            {% if error %}
+                <div class="text-center alert alert-danger" role="alert">
+                    <strong>{{ error }}</strong>
+                </div>
+            {% endif %}
+            
+            <div class="row g-2">
+                <div class="col-md">
+                    <div class="form-floating mb-3">
+                        <input class="form-control" type="text" placeholder="First Name" name="first_name" id="first_name" required autocomplete="off">
+                        <label for="first_name">First name<span style="color: #f0606c">*</span></label>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="form-floating mb-3">
+                        <input class="form-control" type="text" placeholder="Last Name" name="last_name" id="last_name" required autocomplete="off">
+                        <label for="last_name">Last name<span style="color: #f0606c">*</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input class="form-control" type="email" placeholder="Email" name="email" id="email" required autocomplete="off">
+                <label for="email">Email address<span style="color: #f0606c">*</span></label>
+            </div>
+            
+            <div class="form-floating mb-3">
+                <input class="form-control" type="text" placeholder="Slack" name="slack" id="slack" autocomplete="off">
+                <label for="slack" style="color: rgb(85, 85, 85)">Slack username</label>
+            </div>
+            
+
+            <div class="row g-2">
+                <div class="col-md">
+                    <div class="form-floating mb-3">
+                        <input class="form-control" type="password" placeholder="Password" name="password" id="password" required autocomplete="off">
+                        <label for="password">Password<span style="color: #f0606c">*</span></label>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="form-floating mb-3">
+                        <input class="form-control" type="password" placeholder="Confirm Password" name="c_password" id="c_password" required autocomplete="off">
+                        <label for="password">Repeat Password<span style="color: #f0606c">*</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2" style="margin-top: 20px; margin-bottom: 30px;">
+                <button class="btn btn-outline-primary" type="submit" id="register_button">Create Account</button>
+            </div>
+        </form>
+        <div class="row justify-content-center">
+            <a class="text-center col-6 col-sm-4 link-primary" href="/account/login" style="text-decoration: none;">Login instead</a>
+        </div>
+    </div>
+{% endblock %}

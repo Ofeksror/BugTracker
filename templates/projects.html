@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    Projects Control
+{% endblock %}
+
+
+{% block nav %}
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/tickets">Tickets</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/projects">Projects</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/team">Team</a>
+    </li>
+{% endblock %}
+
+
+{% block main %}
+
+    <div class="container-sm">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-primary" role="alert">{{ message }}</div>
+                {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    
+    <div class="container-fluid" style="max-width: 1600px;">
+        <h1 class="display-6 text-center m-3">Projects</h1>
+        <hr style="margin-bottom: 25px; border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));">
+        <div id="projectList">
+            <div class="row g-4" style="margin-left:auto; margin-right:auto;">
+                {% for Project in Projects %}
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="card w-8" style="margin: 0 auto; float: none; cursor: pointer;" onclick="location.href='/projects/?project={{ Project.ID }}';">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ Project.Title }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ Project.Status }}</h6>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="{{ Project.Done }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ Project.Done }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                <style>
+                    .card {
+                        transition-duration: 0.3s;
+                    }
+                    .card:hover {
+                        transform:scale(1.05,1.05);
+                        margin: auto;
+                        // background-color: rgb(238, 238, 238);
+                        border-color: rgb(17, 174, 236);
+                        color: rgb(17, 174, 236);
+                        // box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.192);
+                    }
+                </style>
+            </div>
+        </div>
+
+        <hr>
+        <div class="text-center">
+            <button data-bs-toggle="modal" data-bs-target="#NewProjectModal" class="btn btn-primary">New Project</button>
+        </div>
+        
+        <div class="modal fade" id="NewProjectModal" tabindex="-1" aria-labelledby="NewProjectModal" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ModalTitle">New Project</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3" id="changeableTicketDetails">
+                            <form name="newProject" id="newProject" action="/control/projects" method="post">
+                                <label for="title" class="form-label">Title</label>
+                                <input class="form-control" aria-label="default input example" required autocomplete="off" id="title" name="title" placeholder="Project title" type="text">
+                                
+                                <label for="status" class="form-label" style="margin-top: 15px">Status:</label>
+                                <select class="form-select" aria-label=".form-select-sm example" name="status">
+                                    <option value="Open">Open</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                    
+                                <label for="project-Assign" class="form-label" style="display: inline-block; margin-top: 15px;">Assign managers:</label>
+                                <p><kbd><kbd>Ctrl</kbd> + <kbd>Click</kbd></kbd> on team members to assign or remove them from project</p>
+                                <select class="form-select" multiple size="4" aria-label="multiple size 4 select example" required id="project-Assign" name="project-Assign">
+                                    {% for Manager in Managers %}
+                                        <option value="{{ Manager.id }}">{{ Manager.name }}</option>
+                                    {% endfor %}
+                                </select>
+                    
+                            </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button class="btn btn-primary" type="submit" form="newProject">Create</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

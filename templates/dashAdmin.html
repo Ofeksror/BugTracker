@@ -1,0 +1,217 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    Dashboard | Admin
+{% endblock %}
+
+
+{% block head %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {'packages':['gantt']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function toMilliseconds(minutes) {
+            return minutes * 60 * 1000;
+        }
+
+    function toDate(sdate) {
+        let dateArr = sdate.split(" ")[0].split('-');
+        let year = dateArr[0]
+        let month = dateArr[1] - 1
+        let day = dateArr[2]
+        date = new Date(year, month, day)
+        return date
+    }
+
+    function drawChart() {
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Task ID');
+        data.addColumn('string', 'Task Name');
+        data.addColumn('string', 'Priority');
+        data.addColumn('date', 'Start Date');
+        data.addColumn('date', 'End Date');
+        data.addColumn('number', 'Duration');
+        data.addColumn('number', 'Percent Complete');
+        data.addColumn('string', 'Dependencies');
+
+        data.addRows([
+            {% for Project in Projects %}
+            ['{{ Project.ID }}', '{{ Project.Title }}', '{{ Project.Title }}', toDate("{{ Project.Start }}"), toDate("{{ Project.End }}"), null, {{ Project.Percentage }}, null],
+            {% endfor %}
+        ])
+
+        var options = {
+            // width: 300,
+            height: {{ GanttHeight }},
+            gantt: {
+                trackHeight: 30,
+                barCornerRadius: 10,
+                innerGridTrack: {fill: '#ffffff'},
+                innerGridDarkTrack: {fill: '#fafafa'},
+                // pallete https://stackoverflow.com/questions/35165271/customize-the-bar-colors-in-google-gantt-charts
+                palette: [
+                    { // RED (Urgent)
+                        "color": "#e0223c", // "#e80c30",
+                        "dark": "#ad1127", //"#850b1f",
+                        "light": "#f2465d" //"#f04f6a"
+                    },
+                    { // GREEN (Low)
+                        "color": "#1ad636",
+                        "dark": "#0e9622",
+                        "light": "#87ed96"
+                    },
+                    { // Blue (Medium)
+                        "color": "#1ca8d4",
+                        "dark": "#1389ad",
+                        "light": "#5ec6e6"
+                    },
+                    { // Orange (High)
+                        "color": "#f5a214",
+                        "dark": "#96630b",
+                        "light": "#f09554"
+                    },
+                ],
+                labelStyle: {
+                    fontName: 'Lato',
+                    fontSize: 16
+                }
+            },
+        };
+
+        var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
+
+        chart.draw(data, options);
+    }
+</script>
+{% endblock %}
+
+
+{% block nav %}
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/tickets">Tickets</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/projects">Projects</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/team">Team</a>
+    </li>
+{% endblock %}
+
+
+{% block main %}
+    <div class="container-sm">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- TICKETS - KANBAN BOARD -->
+            <!-- Tickets assigned to user (group by status) -->
+    <div id="kanbanProjects" class="container">
+        <div class="row">
+
+            <ol id="openProjects" class="col-md-4">
+                <h2 style="margin-bottom: 20px; text-align: center;"><span class="badge rounded-pill text-bg-primary">Open</span></h2>
+
+
+                <div id="properties">
+                    {% for p in OpenProjects %}
+                    <li style="list-style: none">
+                        <div class="card text-bg-light mb-3" style="max-width: 18rem; cursor: pointer; margin: 0 auto; float: none;" id="{{ p.ID }}" onclick="location.href='/projects/?project={{ p.ID }}';">
+                            <div class="card-body">
+                                <h4 class="card-title">{{ p.Title }}</h4>
+                                <p style="text-decoration: underline; display: inline-block; margin-bottom: 3px;">Approximate dates:</p>
+                                <p class="card-text" style="display: inline-block;">{{ p.Start }} - {{ p.End }}</p>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </div>
+            </ol>
+            
+            <ol id="inProgressProjects" class="col-md-4">
+                <h2 style="margin-bottom: 20px; text-align: center;"><span class="badge rounded-pill text-bg-primary">In Progress</span></h2>
+                
+                <div id="properties">
+                    {% for p in InProgressProjects %}
+                    <li style="list-style: none">
+                        <div class="card text-bg-light mb-3" style="max-width: 18rem; cursor: pointer; margin: 0 auto; float: none;" id="{{ p.ID }}" onclick="location.href='/projects/?project={{ p.ID }}';">
+                            <div class="card-body">
+                                <h4 class="card-title">{{ p.Title }}</h4>
+                                <p style="text-decoration: underline; display: inline-block; margin-bottom: 3px;">Approximate dates:</p>
+                                <p class="card-text" style="display: inline-block;">{{ p.Start }} - {{ p.End }}</p>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </div>
+            </ol>
+
+            <ol id="closedProjects" class="col-md-4">
+                <h2 style="margin-bottom: 20px; text-align: center;"><span class="badge rounded-pill text-bg-primary">Closed</span></h2>
+                
+                <div id="properties">
+                    {% for p in ClosedProjects %}
+                    <li style="list-style: none">
+                        <div class="card text-bg-light mb-3" style="max-width: 18rem; cursor: pointer; margin: 0 auto; float: none;" id="{{ p.ID }}" onclick="location.href='/projects/?project={{ p.ID }}';">
+                            <div class="card-body">
+                                <h4 class="card-title">{{ p.Title }}</h4>
+                                <p style="text-decoration: underline; display: inline-block; margin-bottom: 3px;">Approximate dates:</p>
+                                <p class="card-text" style="display: inline-block;">{{ p.Start }} - {{ p.End }}</p>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </div>
+            </ol>
+        </div>
+    </div>
+
+
+    <!-- - Gantt charts -->
+            <!-- Tickets by date started → deadline -->
+
+    {% if Projects %}
+    <div class="container" style="margin-top: 60px; margin-bottom: 60px;">
+        <div class="col align-self-center">
+            <div id="chart_div"></div>
+            <style>
+                text {
+                    font-family: 'Lato', sans-serif !important;
+                }
+            </style>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Gallery of all projects manager is assigned to -->
+
+    <div id="projectList" class="container-lg" style="margin-bottom: 130px;">
+        <h1 style="text-align: center; margin-bottom: 25px;">Projects</h1>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for Project in NewProjects %}
+                <div class="col">
+                    <div class="card" style="max-width: 18rem; cursor: pointer; margin: 0 auto; float: none;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ Project.Title }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ Project.Status }}</h6>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="{{ Project.Done }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ Project.Done }}%"></div>
+                            </div>
+                            <button onclick="location.href='/projects/?project={{ Project.ID }}';" id="redirectProjectPage" class="btn btn-primary" style="margin-top: 15px;">View</button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}

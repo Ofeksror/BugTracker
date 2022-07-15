@@ -1,0 +1,292 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ Title }} | Ticket
+{% endblock %}
+
+{% block main %}
+
+    <style>
+        .BugBadge {
+            background-color: #4fad18;
+            color: rgb(255, 255, 255);
+        }
+        .IssueBadge {
+            background-color: #FF595E;
+            color: rgb(255, 255, 255);
+        }
+        .requestBadge {
+            background-color: #1982C4;
+            color: rgb(255, 255, 255);
+        }
+        .EnhancementBadge {
+            background-color: #fccb47;
+            color: rgb(255, 255, 255);
+            text-shadow: 0px 0px 2px #00000069;
+        }
+
+        .LowBadge {
+            background-color: #17b2f0;
+            color: rgb(255, 255, 255);
+        }
+        .MediumBadge {
+            background-color: #1391bb;
+            color: rgb(255, 255, 255);
+        }
+        .HighBadge {
+            background-color: #0b3f69;
+            color: rgb(255, 255, 255);
+        }
+        .UrgentBadge {
+            background-color: #db3030;
+            color: rgb(255, 255, 255);
+        }
+
+        .OpenBadge {
+            background-color: #9c49e9;
+            color: rgb(255, 255, 255);
+        }
+        .ProgressBadge {
+            background-color: #d135e6;
+            color: rgb(255, 255, 255);
+        }
+        .ResolvedBadge {
+            background-color: #f17cca;
+            color: rgb(255, 255, 255);
+        }
+    </style>
+
+    <div class="container-sm">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-primary" role="alert">{{ message }}</div>
+                {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div class="container-fluid" style="max-width: 100%">
+        <div class="row justify-content-center g-4">
+            <div class="col-xl-4 ticketProperties">
+                <h1 class="display-4">{{ Title }}</h1>
+                <hr class="border-primary border-1 opacity-75">
+
+                <div>
+                    <span class="badge LargerBadge rounded-pill {{Type}}Badge" style="display: inline-block;">{{ Type }}</span>
+                    <span class="badge LargerBadge rounded-pill {{ Status }}Badge" style="display: inline-block;">{{ Status }}</span>
+                    <span class="badge LargerBadge rounded-pill {{ Priority }}Badge" style="display: inline-block;">{{ Priority }}</span>
+                    <style>
+                        .LargerBadge {
+                            font-size: 1em;
+                        }
+                        </style>
+                </div>
+
+                <pre class="my-3">{{ Description }}</pre>
+
+                <div class="my-3">
+                    <span class="badge text-bg-light" style="font-weight: 400; font-size: 0.9em; box-shadow: 1px 1px 6px 2px rgba(0, 0, 0, 0.1);">Deadline: {{ Deadline }}</span>
+                    <span class="badge text-bg-light" style="font-weight: 400; font-size: 0.9em; box-shadow: 1px 1px 6px 2px rgba(0, 0, 0, 0.1);">Estimated {{ Estimate }} hours</span>
+                </div>
+                <style>
+                    #projectButton {
+                        width: 8em;
+                        border-color: rgb(226, 226, 226);
+                        transition: 0.3s;
+                    }
+                    #projectButton:hover {
+                        transform:scale(1.2,1.2);
+                        width:fit-content;
+                        margin-right: 20px;
+                        margin-left: 12px;
+                        // box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.26);
+                        background-color: rgb(0, 110, 255);
+                        border-color: rgb(0, 110, 255);
+                    }
+                    #projectButton:hover span {
+                        display: none;
+                    }
+                    #projectButton:hover::before {
+                        color: rgb(255, 255, 255);
+                        text-shadow: 1px 1px 2px #0082c427;
+                        content: "{{ Project }}";
+                    }
+                </style>
+                <p>Submitted by <b>{{ Author }}</b> on <i>{{ DateAdded }}</i></p>
+                
+                <div class="my-3">
+                    <a id="projectButton" class="btn btn btn-light" href="/projects/?project={{ ProjectID }}"><span>Project</span></a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#TicketModal">Update Ticket</button>
+                </div>
+                <hr>
+                <div class="list-group">
+                    <button type="button" class="list-group-item list-group-item-action active" aria-current="true">Members</button>
+                    {% for member in Assigned %}
+                    <span id="user{{ member.id }}">
+                        <button type="button" class="list-group-item list-group-item-action"data-bs-toggle="modal" data-bs-target="#userContactModal" data-bs-slack="{{ member.slack }}" data-bs-email="{{ member.email }}" data-bs-id="{{ member.id }}" data-bs-name="{{ member.name }}" data-bs-role="{{ member.role }}">{{ member.name }} | {{ member.role }}</button>
+                    </span>
+                    {% endfor %}
+                  </div>
+                <div class="modal fade" id="userContactModal" tabindex="-1" aria-labelledby="userContactModal" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="userContactModalTitle">Contact Information</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3" id="unchangeableUserDetails">
+                                    <h3 id="user-Fullname" style="display:inline"></h3>
+                                    <h6 id="user-Role" style="display:inline; margin-left: 10px; color: #1391bb;"></h6>
+                                    <span id="contactUser">                        
+                                        <p style="margin-top: 7px; margin-bottom: 4px;" id="user-Email"></p>
+                                        <p id="user-Slack"></p>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function capitalizeFirstLetter(string) {
+                        return string.charAt(0).toUpperCase() + string.slice(1);
+                    }
+
+                    let userModal = document.getElementById('userContactModal')
+                    userModal.addEventListener('show.bs.modal', event => {
+                        // Button that triggered the modal
+                        let button = event.relatedTarget
+                        // Extract info from data-bs-* attributes
+                        let name = button.getAttribute('data-bs-name')
+                        let email = button.getAttribute('data-bs-email')
+                        let slack = button.getAttribute('data-bs-slack')
+                        let role = button.getAttribute('data-bs-role')
+                        // If necessary, you could initiate an AJAX request here
+                        // and then do the updating in a callback.
+                        //
+                        // Update the modal's content.
+                        let modalUserName = userModal.querySelector('#user-Fullname')
+                        let modalUserEmail = userModal.querySelector('#user-Email')
+                        let modalUserSlack = userModal.querySelector('#user-Slack')
+                        let modalUserRole = userModal.querySelector('#user-Role')
+    
+                        modalUserName.textContent = name
+                        modalUserEmail.textContent = email
+                        modalUserRole.textContent = capitalizeFirstLetter(role)
+    
+                        if (slack == "None") {
+                            modalUserSlack.style.display = 'none';
+                        }
+                        else {
+                            modalUserSlack.style.display = 'block';
+                        }
+                        modalUserSlack.textContent = "Slack: @" + slack
+                    })
+                </script>
+            </div>
+
+            <div class="modal fade" id="TicketModal" tabindex="-1" aria-labelledby="TicketModal" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="TicketModalTitle">Update Ticket</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3" id="changeableTicketDetails">
+                                <form action="/control/update/ticket" method="post" id="UpdateTicket" name="UpdateTicket">
+                                    <input name="ticket-ID" id="ticket-ID" type="hidden" readonly value="{{ TicketID }}">
+
+                                    <h3>{{ Title }}</h3>
+
+                                    <div id="ticket-Labels" class="row g-3">
+                                        <div class="col">
+                                            <label for="ticket-Type" class="form-label" style="margin-top: 15px">Type:</label>
+                                            <select required id="ticket-Type" name="ticket-Type" class="form-select">
+                                                <option value="Bug">Bug</option>
+                                                <option value="Issue">Issue</option>
+                                                <option value="Feature request">Feature request</option>
+                                                <option value="Enhancement">Enhancement</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="col">
+                                            <label for="ticket-Status" class="form-label" style="margin-top: 15px">Status:</label>
+                                            <select required id="ticket-Status" name="ticket-Status" class="form-select">
+                                                <option value="Open">Open</option>
+                                                <option value="In Progress">In Progress</option>
+                                                <option value="Resolved">Resolved</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col">
+                                            <label for="ticket-Priority" class="form-label" style="margin-top: 15px">Priority:</label>
+                                            <select required id="ticket-Priority" name="ticket-Priority" class="form-select">
+                                                <option value="Low">Low</option>
+                                                <option value="Medium">Medium</option>
+                                                <option value="High">High</option>
+                                                <option value="Urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <input id="submitButtonText" type="submit" class="btn btn-primary" form="UpdateTicket">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                let Modal = document.getElementById('TicketModal')
+                Modal.addEventListener('show.bs.modal', event => {
+                    // Button that triggered the modal
+                    let updateButton = event.relatedTarget
+
+                    let ModalType = Modal.querySelector("#ticket-Type")
+                    ModalType.value = "{{ Type }}"
+
+                    let ModalStatus = Modal.querySelector("#ticket-Status")
+                    ModalStatus.value = "{{ Status }}"
+
+                    let ModalPriority = Modal.querySelector("#ticket-Priority")
+                    ModalPriority.value = "{{ Priority }}"
+                })
+            </script>
+
+
+
+
+            <div class="col-xl-4">
+                <div>
+                    {% for Comment in Comments %}
+                        <span class="comment card" style="margin-top: 10px; margin-bottom:10px;">
+                                <div class="card-body">
+                                  <h5 class="card-title">{{ Comment.commentor }}</h5>
+                                  <pre class="card-text">{{ Comment.comment }}</pre>
+                                  <p class="card-text"><small class="text-muted">{{ Comment.date }}</small></p>
+                            </div>
+                        </span>
+                    {% endfor %}
+                </div>
+                <div>
+                    <form method="post" action="/tickets/comment"> 
+                        <input name="ticketIDcomment" id="ticketIDcomment" type="hidden" value="{{ TicketID }}" readonly>
+                        <div class="input-group mb-3">
+                            <textarea required class="form-control" id="commentText" name="commentText" placeholder="Enter your comment" rows="2" style="width: 75%"></textarea>
+                            <input class="btn btn-outline-secondary" type="submit" method="post" value="Post">
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
+    </div>
+
+
+{% endblock %}

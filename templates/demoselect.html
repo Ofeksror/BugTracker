@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block main %}
+    <script>
+        let navbar = document.getElementById('navbar');
+        elements = document.getElementById('navbarSupportedContent');
+        elements.remove();
+    </script>
+
+    <div class="container-sm" style="margin: auto; padding: 30px; max-width: 800px;">
+        <form action="/account/login" method="post">
+            <h1 class="text-center display-5">Demo Account</h1>
+            <hr class="border-primary border-3 opacity-75">
+
+            <div class="text-center" style="margin-top: 20px; margin-bottom: 30px;">
+                <a style="width: 10rem; display: inline-block;" class="btn btn-outline-primary" href="/account/demo/admin">Admin</a>
+                <a style="width: 10rem; display: inline-block;" class="btn btn-outline-primary" href="/account/demo/manager">Manager</a>
+                <a style="width: 10rem; display: inline-block;" class="btn btn-outline-primary" href="/account/demo/developer">Developer</a>
+            </div>
+        </form>            
+        <div class="row justify-content-center">
+            <!-- <a class="text-center col-6 col-sm-4 link-primary" href="/account/reset" style="text-decoration: none;">Forgot password?</a> -->
+            <a class="text-center col-6 col-sm-4 link-primary" href="/account/login" style="text-decoration: none;">Back to Login</a>
+        </div>
+    </div>
+
+{% endblock %}

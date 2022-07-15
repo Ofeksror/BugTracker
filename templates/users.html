@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    Team Management
+{% endblock %}
+
+
+{% block nav %}
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/tickets">Tickets</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/projects">Projects</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="/control/team">Team</a>
+    </li>
+{% endblock %}
+
+
+{% block main %}
+
+
+    <div class="container-sm">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                {% if message == 'User is now a member of your company' %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% elif message == 'Role was updated for user' %}
+                    <div class="alert alert-success" role="alert">{{ message }}</div>
+                {% elif message == 'User has been removed from company' %}
+                    <div class="alert alert-primary" role="alert">{{ message }}</div>
+                {% else %}
+                    <div class="alert alert-danger" role="alert">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <div id='inviteNewUser' class="container-sm" style="max-width: 800px; margin-top: 30px; margin-bottom: 30px;">
+        <h4>Invite new team member</h4>
+        <form action="/control/new/member" method="post" class="row g-3">
+            <div class="col">
+                <input type="email" id="email" name="email" class="form-control" placeholder="Email Address" placeholder="name@example.com" required autocomplete="off">
+            </div>
+            <div class="col">
+                <select required name="role" id="role" class="form-select">
+                    <option value="" disabled selected hidden>Select Role</option>
+                    <option value="dev">Developer</option>
+                    <option value="tester">Tester</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="col">
+                <button type="submit" id="invite" class="btn btn-primary">Invite</button>
+            </div>
+        </form>
+    </div>
+
+
+    <div class="container-lg" style="margin-top: 40px;">
+        <h2>Company members</h2>
+        <p style="color: rgb(51, 51, 51)">Click on any to edit/remove</p>
+        <!-- row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 -->
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+            {% for User in Users %}
+                <div class="col">
+                    <div id="user{{ User.id }}" class="card" data-bs-toggle="modal" data-bs-target="#userSettingsModal" data-bs-fullname="{{ User.first }} {{ User.last }}" data-bs-email="{{ User.email }}" data-bs-slack="{{ User.slack }}" data-bs-role="{{ User.role }}" style="cursor: pointer;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ User.first }} {{ User.last }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ User.role | capitalize }}</h6>
+                            <p class="card-text">{{ User.email }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <style>
+                .card {
+                    transition-duration: 0.3s;
+                }
+                .card:hover {
+                    transform:scale(1.05,1.05);
+                    margin: auto;
+                    // background-color: rgb(238, 238, 238);
+                    border-color: rgb(17, 174, 236);
+                    color: rgb(17, 174, 236);
+                    // box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.192);
+                }
+            </style>
+        </div>
+    </div>
+
+    <div class="modal fade" id="userSettingsModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3" id="unchangeableUserDetails">
+                    <h1 id="user-Fullname"></h1>
+                    <span id="contactUser">                        
+                        <p id="user-Email"></p>
+                        <p id="user-Slack"></p>
+                    </span>
+                </div>
+                <form action="/control/team" method="post" id="changeRole">
+                    <div class="mb-3 row">
+                        <label for="user-EditRole" class="col-sm-2 col-form-label">Role:</label>
+                        <div class="col-sm-10">
+                            <select id="user-EditRole" name="user-EditRole" class="form-select">
+                                <option value="admin">Admin</option>
+                                <option value="manager">Manager</option>
+                                <option value="dev">Developer</option>
+                                <option value="tester">Tester</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="changeRoleEmail" name="changeRoleEmail" readonly value="">
+                    </div>
+                </form>
+                <form action="/control/remove/member" method="post" id="deleteUser"><input type="hidden" readonly id="userEmailDelete" name="userEmailDelete" value=""></form>
+            </div>
+            <div class="modal-footer">
+                <input type="submit" class="btn btn-danger" form="deleteUser" value="Remove User">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <input type="submit" class="btn btn-primary" form="changeRole" value="Save Changes">
+            </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let userModal = document.getElementById('userSettingsModal')
+        userModal.addEventListener('show.bs.modal', event => {
+            // Button that triggered the modal
+            let button = event.relatedTarget
+            // Extract info from data-bs-* attributes
+            let name = button.getAttribute('data-bs-fullname')
+            let email = button.getAttribute('data-bs-email')
+            let slack = button.getAttribute('data-bs-slack')
+            let role = button.getAttribute('data-bs-role')
+            // If necessary, you could initiate an AJAX request here
+            // and then do the updating in a callback.
+            //
+            // Update the modal's content.
+            let modalUserName = userModal.querySelector('#user-Fullname')
+            let modalUserEmail = userModal.querySelector('#user-Email')
+            let modalUserSlack = userModal.querySelector('#user-Slack')
+            let modalUserRole = userModal.querySelector('#user-EditRole')
+            let modalDeleteUserEmail = userModal.querySelector('#userEmailDelete')
+            let modalChangeRoleEmail = userModal.querySelector('#changeRoleEmail')
+
+            modalUserName.textContent = name
+            modalUserEmail.textContent = email
+            modalUserRole.value = role
+            modalDeleteUserEmail.value = email
+            modalChangeRoleEmail.value = email
+
+            console.log(slack)
+
+            if (slack == "None") {
+                modalUserSlack.style.display = 'none';
+            }
+            else {
+                modalUserSlack.style.display = 'block';
+            }
+
+            modalUserSlack.textContent = "Slack: @" + slack
+        })
+    </script>
+
+
+{% endblock %}

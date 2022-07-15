@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Welcome | New Account
+{% endblock %}
+
+{% block main %}
+
+    <script>
+        dash = document.getElementById('dashElement');
+        dash.remove();
+    </script>
+
+    <div id="box" class="text-center position-absolute top-50 start-50 translate-middle">
+        <div style="padding: 50px"> <!-- class="px-5 py-5" -->
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p style="color: white; text-decoration: underline; margin-bottom: 20px;">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+    
+            <h6 class="text-light">You currently are not assigned to any company</h6>
+            <h6 class="text-light">You can wait until your superior will invite you to your company, or</h6>
+            
+            
+            <button style="margin-top: 3%" onclick="location.href = '/new/company';" id="create_company" class="btn btn-outline-light">Create a Company</button>
+        </div>
+    </div>
+
+    <style>
+        html, body {
+            width: 100%;
+            height:100%;
+        }
+
+        #box {
+            background-color: rgba(255, 255, 255, 0.068);
+            border-radius: 50px;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .footer {
+            // display: none;
+        }
+    </style>
+{% endblock %}

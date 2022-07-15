@@ -1,0 +1,461 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    {{ Title }} | Ticket
+{% endblock %}
+
+
+{% block nav %}
+    {% if ControlAccess == 1 %}
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/control/tickets">Tickets</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/control/projects">Projects</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/control/team">Team</a>
+        </li>
+    {% endif %}
+{% endblock %}
+
+
+{% block main %}
+
+    <style>
+        .BugBadge {
+            background-color: #4fad18;
+            color: rgb(255, 255, 255);
+        }
+        .IssueBadge {
+            background-color: #FF595E;
+            color: rgb(255, 255, 255);
+        }
+        .requestBadge {
+            background-color: #1982C4;
+            color: rgb(255, 255, 255);
+        }
+        .EnhancementBadge {
+            background-color: #fccb47;
+            color: rgb(255, 255, 255);
+            text-shadow: 0px 0px 2px #00000069;
+        }
+
+        .LowBadge {
+            background-color: #17b2f0;
+            color: rgb(255, 255, 255);
+        }
+        .MediumBadge {
+            background-color: #1391bb;
+            color: rgb(255, 255, 255);
+        }
+        .HighBadge {
+            background-color: #0b3f69;
+            color: rgb(255, 255, 255);
+        }
+        .UrgentBadge {
+            background-color: #db3030;
+            color: rgb(255, 255, 255);
+        }
+
+        .OpenBadge {
+            background-color: #9c49e9;
+            color: rgb(255, 255, 255);
+        }
+        .ProgressBadge {
+            background-color: #d135e6;
+            color: rgb(255, 255, 255);
+        }
+        .ResolvedBadge {
+            background-color: #f17cca;
+            color: rgb(255, 255, 255);
+        }
+    </style>
+
+    <div class="container-sm">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-primary" role="alert">{{ message }}</div>
+                {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    
+    <div class="container-fluid" style="max-width: 100%">
+        <div class="row justify-content-center g-4">
+            <div class="col-xl-4 ticketProperties">
+                <h1 class="display-4">{{ Title }}</h1>
+                <hr class="border-primary border-1 opacity-75">
+
+                <div>
+                    <span class="badge LargerBadge rounded-pill {{Type}}Badge" style="display: inline-block;">{{ Type }}</span>
+                    <span class="badge LargerBadge rounded-pill {{ Status }}Badge" style="display: inline-block;">{{ Status }}</span>
+                    <span class="badge LargerBadge rounded-pill {{ Priority }}Badge" style="display: inline-block;">{{ Priority }}</span>
+                    <style>
+                        .LargerBadge {
+                            font-size: 1em;
+                        }
+                        </style>
+                </div>
+
+                <pre class="my-3">{{ Description }}</pre>
+
+                <div class="my-3">
+                    <span class="badge text-bg-light" style="font-weight: 400; font-size: 0.9em; box-shadow: 1px 1px 6px 2px rgba(0, 0, 0, 0.1);">Deadline: {{ Deadline }}</span>
+                    <span class="badge text-bg-light" style="font-weight: 400; font-size: 0.9em; box-shadow: 1px 1px 6px 2px rgba(0, 0, 0, 0.1);">Estimated {{ Estimate }} hours</span>
+                </div>
+                <style>
+                    #projectButton {
+                        width: 8em;
+                        border-color: rgb(226, 226, 226);
+                        transition: 0.3s;
+                    }
+                    #projectButton:hover {
+                        transform:scale(1.2,1.2);
+                        width:fit-content;
+                        margin-right: 20px;
+                        margin-left: 12px;
+                        // box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.26);
+                        background-color: rgb(0, 110, 255);
+                        border-color: rgb(0, 110, 255);
+                    }
+                    #projectButton:hover span {
+                        display: none;
+                    }
+                    #projectButton:hover::before {
+                        color: rgb(255, 255, 255);
+                        text-shadow: 1px 1px 2px #0082c427;
+                        content: "{{ Project }}";
+                    }
+                </style>
+                <p>Submitted by <b>{{ Author }}</b> on <i>{{ DateAdded }}</i></p>
+                
+                <div class="my-3">
+                    <a id="projectButton" class="btn btn btn-light" href="/projects/?project={{ ProjectID }}"><span>Project</span></a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#AdminTicketModal">Update Ticket</button>
+                </div>
+                <hr>
+                <div class="list-group">
+                    <button type="button" class="list-group-item list-group-item-action active" aria-current="true">Members</button>
+                    {% for member in Assigned %}
+                    <span id="user{{ member.id }}">
+                        <button type="button" class="list-group-item list-group-item-action"data-bs-toggle="modal" data-bs-target="#userContactModal" data-bs-slack="{{ member.slack }}" data-bs-email="{{ member.email }}" data-bs-id="{{ member.id }}" data-bs-name="{{ member.name }}" data-bs-role="{{ member.role }}">{{ member.name }} | {{ member.role | capitalize }}</button>
+                    </span>
+                    {% endfor %}
+                </div>
+                <div class="modal fade" id="userContactModal" tabindex="-1" aria-labelledby="userContactModal" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="userContactModalTitle">Contact Information</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3" id="unchangeableUserDetails">
+                                    <h3 id="user-Fullname" style="display:inline"></h3>
+                                    <h6 id="user-Role" style="display:inline; margin-left: 10px; color: #1391bb;"></h6>
+                                    <span id="contactUser">                        
+                                        <p style="margin-top: 7px; margin-bottom: 4px;" id="user-Email"></p>
+                                        <p id="user-Slack"></p>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function capitalizeFirstLetter(string) {
+                        return string.charAt(0).toUpperCase() + string.slice(1);
+                    }
+
+                    let userModal = document.getElementById('userContactModal')
+                    userModal.addEventListener('show.bs.modal', event => {
+                        // Button that triggered the modal
+                        let button = event.relatedTarget
+                        // Extract info from data-bs-* attributes
+                        let name = button.getAttribute('data-bs-name')
+                        let email = button.getAttribute('data-bs-email')
+                        let slack = button.getAttribute('data-bs-slack')
+                        let role = button.getAttribute('data-bs-role')
+                        // If necessary, you could initiate an AJAX request here
+                        // and then do the updating in a callback.
+                        //
+                        // Update the modal's content.
+                        let modalUserName = userModal.querySelector('#user-Fullname')
+                        let modalUserEmail = userModal.querySelector('#user-Email')
+                        let modalUserSlack = userModal.querySelector('#user-Slack')
+                        let modalUserRole = userModal.querySelector('#user-Role')
+    
+                        modalUserName.textContent = name
+                        modalUserEmail.textContent = email
+                        modalUserRole.textContent = capitalizeFirstLetter(role)
+    
+                        if (slack == "None") {
+                            modalUserSlack.style.display = 'none';
+                        }
+                        else {
+                            modalUserSlack.style.display = 'block';
+                        }
+                        modalUserSlack.textContent = "Slack: @" + slack
+                    })
+                </script>
+            </div>
+
+            <div class="modal fade" id="AdminTicketModal" tabindex="-1" aria-labelledby="AdminTicketModal" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="AdminTicketModalTitle">Edit Ticket #{{ TicketID }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3" id="changeableTicketDetails">
+                                <form action="/control/tickets/" method="post" id="AdminUpdateTicket" name="AdminUpdateTicket">
+                                    <input name="ticket-ID" id="ticket-ID" type="hidden" readonly value="{{ TicketID }}">
+
+                                    <label for="ticket-Title" class="form-label">Title</label>
+                                    <input class="form-control" required id="ticket-Title" name="ticket-Title" type="text" value="{{ Title }}">
+
+                                    <label for="ticket-Description" class="form-label" style="margin-top: 15px">Description</label>
+                                    <textarea id="ticket-Description" name="ticket-Description" type="text" class="form-control">{{ Description }}</textarea>
+                                    
+                                    <div id="ticket-Labels" class="row g-3">
+                                            <div class="col">
+                                                <label for="ticket-Type" class="form-label" style="margin-top: 15px">Type:</label>
+                                                <select required id="ticket-Type" name="ticket-Type" class="form-select">
+                                                    <option value="Bug">Bug</option>
+                                                    <option value="Issue">Issue</option>
+                                                    <option value="Feature request">Feature request</option>
+                                                    <option value="Enhancement">Enhancement</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="col">
+                                                <label for="ticket-Status" class="form-label" style="margin-top: 15px">Status:</label>
+                                                <select required id="ticket-Status" name="ticket-Status" class="form-select">
+                                                    <option value="Open">Open</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Resolved">Resolved</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col">
+                                                <label for="ticket-Priority" class="form-label" style="margin-top: 15px">Priority:</label>
+                                                <select required id="ticket-Priority" name="ticket-Priority" class="form-select">
+                                                    <option value="Low">Low</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="High">High</option>
+                                                    <option value="Urgent">Urgent</option>
+                                                </select>
+                                            </div>
+                                    </div>
+
+                                    <div id="ticket-Times" class="row g-3">
+                                            <div class="col">
+                                                <label for="ticket-Deadline" class="form-label" style="margin-top: 15px">Deadline:</label>
+                                                <input value="{{ Deadline }}" type="date" id="ticket-Deadline" name="ticket-Deadline" class="form-select">
+                                                <script>
+                                                    let deadlineElement = document.getElementById('ticket-Deadline')
+                                                    deadlineElement.min = new Date().toISOString().split("T")[0];
+                                                </script>
+                                            </div>
+                                            
+                                            <div class="col">
+                                                <label for="ticket-TimeEstimate" class="form-label" style="margin-top: 15px">Time Estimate (hours):</label>
+                                                <input value="{{ Estimate }}" name="ticket-TimeEstimate" id="ticket-TimeEstimate" type="number" min="0" max="60" class="form-control">            
+                                            </div>
+                                    </div>
+
+                                    <div id="ticket-Relation" class="row g-3">
+                                        <div class="col">
+                                            <label for="ticket-Projects" class="form-label" style="margin-top: 15px">Project:</label>
+                                            <select required id="ticket-Projects" name="ticket-Projects" class="form-select">
+                                                {% for t_Project in Projects %}
+                                                    <option value="{{ t_Project.id }}">{{ t_Project.title }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col">
+                                            <label for="ticket-Assign" class="form-label" style="margin-top: 15px;">Assign team members:</label>
+                                            <div class="help-tip">
+                                                <p><kbd><kbd>Ctrl</kbd> + <kbd>Click</kbd></kbd> on team members to assign or remove them from ticket</p>
+                                            </div>
+                                            <style>
+                                                .help-tip{
+                                                    display: inline-block;
+                                                    /*position: absolute;
+                                                     top: 18px;
+                                                    right: 18px; */
+                                                    text-align: center;
+                                                    width: 24px;
+                                                    height: 24px;
+                                                    font-size: 14px;
+                                                    line-height: 26px;
+                                                    cursor: default;
+                                                }
+        
+                                                .help-tip:before{
+                                                    content:'?';
+                                                    font-weight: bold;
+                                                    color:rgb(23, 138, 204);
+                                                }
+        
+                                                .help-tip:hover p{
+                                                    display:block;
+                                                    transform-origin: 100% 0%;
+        
+                                                    -webkit-animation: fadeIn 0.3s ease-in-out;
+                                                    animation: fadeIn 0.3s ease-in-out;
+        
+                                                }
+        
+                                                .help-tip p{    /* The tooltip */
+                                                    display: none;
+                                                    text-align: left;
+                                                    background-color: #1E2021;
+                                                    padding: 20px;
+                                                    width: 300px;
+                                                    position: absolute;
+                                                    border-radius: 3px;
+                                                    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+                                                    right: -4px;
+                                                    color: #FFF;
+                                                    font-size: 13px;
+                                                    line-height: 1.4;
+                                                }
+        
+                                                .help-tip p:before{ /* The pointer of the tooltip */
+                                                    position: absolute;
+                                                    content: '';
+                                                    width:0;
+                                                    height: 0;
+                                                    border:6px solid transparent;
+                                                    border-bottom-color:#1E2021;
+                                                    right:10px;
+                                                    top:-12px;
+                                                }
+        
+                                                .help-tip p:after{ /* Prevents the tooltip from being hidden */
+                                                    width:100%;
+                                                    height:40px;
+                                                    content:'';
+                                                    position: absolute;
+                                                    top:-40px;
+                                                    left:0;
+                                                }
+        
+                                                /* CSS animation */
+        
+                                                @-webkit-keyframes fadeIn {
+                                                    0% { 
+                                                        opacity:0; 
+                                                        transform: scale(0.6);
+                                                    }
+        
+                                                    100% {
+                                                        opacity:100%;
+                                                        transform: scale(1);
+                                                    }
+                                                }
+        
+                                                @keyframes fadeIn {
+                                                    0% { opacity:0; }
+                                                    100% { opacity:100%; }
+                                                }
+                                            </style>
+                                            <select id="ticket-Assign" name="ticket-Assign" class="form-select" multiple size="4" aria-label="multiple size 4 select example">
+                                                {% for Member in Members %}
+                                                    <option value="{{ Member.id }}">{{ Member.name }} | {{ Member.role }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="mb-3" id="unchangeableTicketDetails">
+                                <p id="unchangeableDetails"></p>
+                            </div>
+                        </div>
+                        <div id="hiddenForms" style="display: none;" class="hidden">
+                            <form id="DeleteTicket" action="/control/remove/ticket" method="post" name="DeleteTicket">
+                                <input value="{{ TicketID }}" id="deleteTicketID" name="deleteTicketID" type="hidden" readonly>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="submit" class="btn btn-danger" form="DeleteTicket" value="Delete">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <input id="submitButtonText" type="submit" class="btn btn-primary" form="AdminUpdateTicket">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                let Modal = document.getElementById('AdminTicketModal')
+                Modal.addEventListener('show.bs.modal', event => {
+                    // Button that triggered the modal
+                    let updateButton = event.relatedTarget
+
+                    let ModalType = Modal.querySelector("#ticket-Type")
+                    ModalType.value = "{{ Type }}"
+
+                    let ModalStatus = Modal.querySelector("#ticket-Status")
+                    ModalStatus.value = "{{ Status }}"
+
+                    let ModalPriority = Modal.querySelector("#ticket-Priority")
+                    ModalPriority.value = "{{ Priority }}"
+
+                    let ModalProjects = Modal.querySelector("#ticket-Projects")
+                    ModalProjects.value = {{ ProjectID }}
+                    
+                    let ModalDeleteTicket = Modal.querySelector("#deleteTicketID")
+                    ModalDeleteTicket.value = {{ TicketID }}
+
+                    let membersAssigned = Modal.querySelector("#ticket-Assign")
+                    let assigned = {{ Assigned|tojson }}
+                    for (let member = 0; member < assigned.length; member++ ) {
+                        for (let i = 0; i < membersAssigned.options.length; i++) {
+                            if (assigned[member]['id'] == membersAssigned[i].value) {
+                                membersAssigned.options[i].selected = true
+                            } 
+                        }
+                    }
+                })
+            </script>
+
+
+
+
+            <div class="col-xl-4">
+                <div>
+                    {% for Comment in Comments %}
+                        <span class="comment card" style="margin-top: 10px; margin-bottom:10px;">
+                                <div class="card-body">
+                                  <h5 class="card-title">{{ Comment.commentor }}</h5>
+                                  <pre class="card-text">{{ Comment.comment }}</pre>
+                                  <p class="card-text"><small class="text-muted">{{ Comment.date }}</small></p>
+                            </div>
+                        </span>
+                    {% endfor %}
+                </div>
+                <div>
+                    <form method="post" action="/tickets/comment"> 
+                        <input name="ticketIDcomment" id="ticketIDcomment" type="hidden" value="{{ TicketID }}" readonly>
+                        <div class="input-group mb-3">
+                            <textarea required class="form-control" id="commentText" name="commentText" placeholder="Enter your comment" rows="2" style="width: 75%"></textarea>
+                            <input class="btn btn-outline-secondary" type="submit" method="post" value="Post">
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
+    </div>
+
+
+{% endblock %}
