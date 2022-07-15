@@ -284,7 +284,7 @@ def dashboard():
             })
 
         # Renders HTML with setup
-        return render_template("dashDev.html", Tickets=newTickets, OpenTickets=openTickets, InProgressTickets=inProgressTickets, ResolvedTickets=resolvedTickets, Projects=projects, GanttHeight=30*len(newTickets))
+        return render_template("dashDev.html", Tickets=newTickets, OpenTickets=openTickets, InProgressTickets=inProgressTickets, ResolvedTickets=resolvedTickets, Projects=projects, GanttHeight=30*len(newTickets)+30)
     elif session["role"] == "manager":
         # Get a list of projects assigned to manager
         projectsAssigned = cursor.execute("SELECT project_id FROM assignedprojects WHERE manager_id = ?", (session['user_id'],)).fetchall()
@@ -348,7 +348,7 @@ def dashboard():
                 'Done': percentDone
             })
         
-        return render_template("dashManager.html", Tickets=tickets, OpenTickets=openTickets, InProgressTickets=inprogressTickets, ResolvedTickets=resolvedTickets, Projects=Projects, GanttHeight=30*len(tickets))
+        return render_template("dashManager.html", Tickets=tickets, OpenTickets=openTickets, InProgressTickets=inprogressTickets, ResolvedTickets=resolvedTickets, Projects=Projects, GanttHeight=30*len(tickets)+30)
     elif session["role"] == "admin":
         companyProjects = cursor.execute("SELECT id, title, status FROM projects WHERE company = ?", (session['company'],)).fetchall()
         projects = []
@@ -422,7 +422,7 @@ def dashboard():
         
         newProjects = projectsPercentage(session['company'])
         
-        return render_template("dashAdmin.html", Projects=projects, NewProjects=newProjects, OpenProjects=openProjects, InProgressProjects=inProgressProjects, ClosedProjects=closedProjects, GanttHeight=30*len(projects))
+        return render_template("dashAdmin.html", Projects=projects, NewProjects=newProjects, OpenProjects=openProjects, InProgressProjects=inProgressProjects, ClosedProjects=closedProjects, GanttHeight=30*len(projects)+30)
     else:
         return redirect('/account/wait')
 
