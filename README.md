@@ -40,7 +40,3 @@ The company, or, the team contains 4 roles:
   - Can manage the team by adding or removing members from the team, or changing the roles of members
   - Can add or remove new projects
   - Can accept, delete or modify new and existing tickets
-  
-
-
-A user simply registers himself as a new account, filling out his personal information and contact information.
