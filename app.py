@@ -135,6 +135,7 @@ def changePassword():
             return redirect('/account/password')
         
         cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (generate_password_hash(newPass), session['user_id'],))
+        db.commit()
         
         flash("Successfuly changed password!")
         return redirect('/account/password')
@@ -282,7 +283,7 @@ def dashboard():
                 "ID": p[0],
                 "Title": p[1]
             })
-
+        
         # Renders HTML with setup
         return render_template("dashDev.html", Tickets=newTickets, OpenTickets=openTickets, InProgressTickets=inProgressTickets, ResolvedTickets=resolvedTickets, Projects=projects, GanttHeight=30*len(newTickets)+30)
     elif session["role"] == "manager":
@@ -474,6 +475,7 @@ def newTicket():
                     (Title, Description, Status, Priority, Type, Deadline, Estimate, Author, DateAdded, Project, Accepted))
     
     db.commit()
+    
     flash("Ticket reported successfuly.")
     if authorRole != 'admin':
         return redirect('/')
@@ -487,6 +489,8 @@ def userManagement():
         email = request.form.get('changeRoleEmail')
         role = request.form.get('user-EditRole')
         cursor.execute("UPDATE users SET role = ? WHERE email = ?", (role, email,))
+        
+        db.commit()
         
         flash("Role was updated for user")
         return redirect('/control/team')
@@ -593,7 +597,7 @@ def testTicketManagement():
         assigned = request.form.getlist('ticket-Assign')
         cursor.execute("DELETE FROM assignedtickets WHERE ticket_id = ?", (ticket_id,))
         for member in assigned:
-            flash(member)
+            # TODO flash(member)
             cursor.execute("INSERT INTO assignedtickets (ticket_id, dev_id) VALUES (?, ?)", (ticket_id, member,))
         
         db.commit()
