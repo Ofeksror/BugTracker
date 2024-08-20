@@ -1,4 +1,8 @@
-# Bug Tracker Website
+# Watch the Demo!
+I made a video demonstrating most of the features of this project. You are welcome to watch it here!
+[![Watch the Demo](https://img.youtube.com/vi/unyFrbFJrW8/maxresdefault.jpg)](https://www.youtube.com/watch?v=unyFrbFJrW8)
+
+# Bug Tracker Project
 Everything we want to create, practicularily in programming, is a lot more than a todo list item that we can simply check off.
 An idea, is most of the time too big and too vague for us to simply act upon it.
 That's why, we prefer boiling an idea into smaller, actionable steps. These steps we can ideed check off in our todo list.
